@@ -35,19 +35,24 @@
       }
     }
 
-    document.getElementById("upload").addEventListener("change", async (e) => {
-      const file = e.target.files[0];
+    document.getElementById("upload").addEventListener("change", function (event) {
+      const file = event.target.files[0];
       if (!file) return;
 
       const reader = new FileReader();
-      reader.onload = () => {
+      reader.onload = function (e) {
         const img = document.getElementById("preview");
-        img.src = reader.result;
+        img.src = e.target.result;
         img.style.display = "block";
         img.onload = async () => {
-          const predictions = await model.predict(img);
-          const top = predictions.reduce((a, b) => a.probability > b.probability ? a : b);
-          document.getElementById("result").innerText = `✅ النتيجة: ${top.className} (${(top.probability * 100).toFixed(1)}%)`;
+          try {
+            const prediction = await model.predict(img);
+            const top = prediction.reduce((a, b) => a.probability > b.probability ? a : b);
+            document.getElementById("result").innerText = `🌳 ${top.className} (${(top.probability * 100).toFixed(2)}%)`;
+          } catch (err) {
+            document.getElementById("result").innerText = "❌ فشل التنبؤ بالصورة";
+            console.error(err);
+          }
         };
       };
       reader.readAsDataURL(file);
