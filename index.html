@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8" />
+  <title>كاشف الشجرة</title>
+  <style>
+    body { font-family: Arial; text-align: center; background: #f0f0f0; padding: 20px; }
+    img { max-width: 300px; display: none; margin-top: 15px; }
+    h1 { color: green; }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@0.8/dist/teachablemachine-image.min.js"></script>
+</head>
+<body>
+  <h1>🌳 كاشف الشجرة</h1>
+  <p id="loading">جاري تحميل النموذج...</p>
+  <input type="file" id="upload" accept="image/*" disabled />
+  <br />
+  <img id="preview" />
+  <p id="result">بانتظار الصورة...</p>
+
+  <script>
+    const URL = "./";
+    let model;
+
+    async function init() {
+      try {
+        const modelURL = URL + "model.json";
+        const metadataURL = URL + "metadata.json";
+        model = await tmImage.load(modelURL, metadataURL);
+        document.getElementById("loading").innerText = "✅ النموذج جاهز!";
+        document.getElementById("upload").disabled = false;
+      } catch (err) {
+        document.getElementById("loading").innerText = "❌ فشل تحميل النموذج";
+        console.error(err);
+      }
+    }
+
+    document.getElementById("upload").addEventListener("change", async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        const img = document.getElementById("preview");
+        img.src = reader.result;
+        img.style.display = "block";
+        img.onload = async () => {
+          const predictions = await model.predict(img);
+          const top = predictions.reduce((a, b) => a.probability > b.probability ? a : b);
+          document.getElementById("result").innerText = `✅ النتيجة: ${top.className} (${(top.probability * 100).toFixed(1)}%)`;
+        };
+      };
+      reader.readAsDataURL(file);
+    });
+
+    init();
+  </script>
+</body>
+</html>
